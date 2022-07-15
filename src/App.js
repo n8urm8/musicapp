@@ -270,6 +270,7 @@ export default function Home() {
             <Text>{`Account: ${truncateAddress(account)}`}</Text>
           </Tooltip>
           <Text>{`Network ID: ${chainId ? chainId : "No Network"}`}</Text>
+          <Text><a style={{color:"blue"}} href="https://mumbai.polygonscan.com/address/0xa2f25545B02eE52EBFcf501E0843DFfc2bc50629#code" target="_blank" rel="noreferrer noopener">View Contract on PolygonScan</a> </Text>
         </VStack>
         {!account ? (
           <HStack padding="20px" justifyContent="flex-start" alignItems="flex-start">
