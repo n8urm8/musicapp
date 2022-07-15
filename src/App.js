@@ -165,9 +165,9 @@ export default function Home() {
   const [CID, setCID] = useState("");
   const [audioURL, setAudioURL] = useState("")
   const [myTokens, setMyTokens] = useState([])
-  const CONTRACT_ADDRESS = "0xb0bDa1ec39e85441994DAd71481f7C0080b57eCB";
+  const contractAddress = "0xa2f25545B02eE52EBFcf501E0843DFfc2bc50629";
   const NFTContract = new ethers.Contract(
-    "0xb0bDa1ec39e85441994DAd71481f7C0080b57eCB",
+    contractAddress,
     MusicNFT.abi,
     signer
   );
@@ -176,36 +176,31 @@ export default function Home() {
     const result = await NFTContract.balanceOf(address);
     const balance = result.toString();
     setNFTBalance(balance);
-    console.log("balance:", balance)
   };
 
-  const loadMyCollection = async (address) => {
-    const totalSupply = await NFTContract.totalSupply();
-    console.log(`total supply: ${totalSupply}`)
+  const loadMyCollection = async () => {
+    const myTokenIds = await NFTContract.getTokensByOwner(account);
+    console.log(`myTokenIds: ${myTokenIds} (${myTokenIds.length})`)
     const tokens = [];
-    for (let i = 0; i < totalSupply; i++) {
-      const tokenId = i;
-      const tokenOwner = await NFTContract.ownerOf(i);
-      const tokenURI = await NFTContract.tokenURI(i);
+    for (let i = 0; i < myTokenIds.length; i++) {
+      console.log("tokenID", myTokenIds[i].toString())
+      const tokenURI = await NFTContract.tokenURI(myTokenIds[i].toString());
+      console.log("tokenURI", tokenURI)
       const tokenInfo = {
-        id: tokenId,
-        owner: tokenOwner.toString(),
+        id: myTokenIds[i].toString(),
         uri: tokenURI.toString()
       }
-      if(tokenOwner.toString() === address.toString()){
-        tokens.push(tokenInfo);
-      } console.log(tokens)
-      // tokens.push(tokenInfo);
+      tokens.push(tokenInfo);
+      
     }
-    setMyTokens(tokens);    
+    setMyTokens(tokens);  
+    console.log("myTokens" , tokens)
   };
-  console.log("all tokens:", myTokens)
-
 
   useEffect(() => {
     account != null && getNFTBalance(account);
-    account != null && loadMyCollection(account);
-  }, [account]);
+    account != null && loadMyCollection();
+  }, [account, nftBalance]);
 
   const mintNFT = async () => {
     try {
@@ -238,7 +233,7 @@ export default function Home() {
 
   return (
     <>
-      <VStack justifyContent="center" alignItems="center" h="100vh">
+      <VStack justifyContent="center" alignItems="center" h="80vh">
         <HStack marginBottom="10px">
           <Text
             margin="0"
@@ -276,25 +271,49 @@ export default function Home() {
           </Tooltip>
           <Text>{`Network ID: ${chainId ? chainId : "No Network"}`}</Text>
         </VStack>
-        {account && (
-          <HStack justifyContent="flex-start" alignItems="flex-start">
+        {!account ? (
+          <HStack padding="20px" justifyContent="flex-start" alignItems="flex-start">
             <Box
-              maxW="sm"
               borderWidth="1px"
               borderRadius="lg"
-              overflow="hidden"
-              padding="10px"
-            >
+              padding="10px">
               <VStack>
-                <Button onClick={mintNFT} isDisabled={CID == "" || loading}>
-                  Mint Song
-                </Button>
-                <Button onClick={loadMyCollection}>
-                  Load My Collection
-                </Button>
+                <Text>Step 1: Setup a Wallet</Text>
+                <Text>Must use Metamask, Coinbase Wallet, or a WalletConnect compatible wallet</Text>
               </VStack>
             </Box>
-
+            <Box
+              borderWidth="1px"
+              borderRadius="lg"
+              padding="10px">
+              <VStack >
+                <Text>Step 2: Connect to Mumbai (Polygon Testnet)</Text>
+                <Text>
+                  Go to <a style={{color:"blue"}} href="https://chainlist.org/" rel="noreferrer noopener" target="_blank">Chainlist</a> and search for Mumbai from the Testnet list, connect wallet, and add to wallet.
+                </Text>
+              </VStack>
+            </Box>
+            <Box
+              borderWidth="1px"
+              borderRadius="lg"
+              padding="10px">
+              <VStack>
+                <Text>Step 3: Get testnet Matic from faucet</Text>
+                <Text>Go to <a style={{color:"blue"}} href="https://faucet.polygon.technology/" rel="noreferrer noopener" target="_blank">Polygon Faucet</a> and enter your wallet address to get MATIC (testnet) tokens sent to you. This is needed to pay for gas fees.</Text>
+              </VStack>
+            </Box>
+            <Box
+              borderWidth="1px"
+              borderRadius="lg"
+              padding="10px">
+              <VStack>
+                <Text>Step 4: Connect To the App!</Text>
+                <Text>Minting NFTs doesn't cost anything besides the gas fee. Have fun!</Text>
+              </VStack>
+            </Box>
+          </HStack>
+        ) : (
+          <HStack justifyContent="flex-start" alignItems="flex-start">
             <Box
               maxW="sm"
               borderWidth="1px"
@@ -325,7 +344,10 @@ export default function Home() {
                 {audioURL === "https://.ipfs.nftstorage.link" && 
                   <p style={{marginTop:"20%"}}>Select a song to play!</p>
                 }
-                {loading && <Text>This song is being minted!</Text>}
+                <Button onClick={mintNFT} isDisabled={CID == "" || loading}>
+                  {!loading? "Mint This Song" : "Minting..."}
+                </Button>
+                
               </VStack>
             </Box>
             {/* <Box
@@ -400,11 +422,12 @@ export default function Home() {
             </Box> */}
           </HStack>
         )}
+        {account && <div>
         <HStack>
             <p>My NFT Balance: {nftBalance}</p>
         </HStack>
         <HStack flexWrap="wrap"  >
-            {myTokens.map((token) => {
+            {myTokens.map((token, i) => {
                 return ( 
                   <Box
                     maxW="sm"
@@ -413,6 +436,7 @@ export default function Home() {
                     overflow="wrap"
                     overflowWrap={true}
                     padding="10px"
+                    key={i}
                   >
                   <VStack>
                     <Text>
@@ -424,7 +448,7 @@ export default function Home() {
                   </VStack>
                 </Box>)
           })}
-        </HStack>
+        </HStack></div>}
         <Text>{error ? error.message : null}</Text>
       </VStack>
     </>
