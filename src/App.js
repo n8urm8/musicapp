@@ -12,9 +12,11 @@ import { CheckCircleIcon, WarningIcon } from "@chakra-ui/icons";
 import { Tooltip } from "@chakra-ui/react";
 import { networkParams } from "./networks";
 import { toHex, truncateAddress } from "./utils";
-import { ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
 import Web3Modal from "web3modal";
 import { providerOptions } from "./providerOptions";
+import MusicNFT from "./constants/abis/MusicNFT.json";
+import { songs } from "./constants/MusicCIDs";
 
 const web3Modal = new Web3Modal({
   cacheProvider: true, // optional
@@ -25,6 +27,7 @@ export default function Home() {
   const [provider, setProvider] = useState();
   const [library, setLibrary] = useState();
   const [account, setAccount] = useState();
+  const [signer, setSigner] = useState();
   const [signature, setSignature] = useState("");
   const [error, setError] = useState("");
   const [chainId, setChainId] = useState();
@@ -37,8 +40,10 @@ export default function Home() {
     try {
       const provider = await web3Modal.connect();
       const library = new ethers.providers.Web3Provider(provider);
+      const signer = library.getSigner();
       const accounts = await library.listAccounts();
       const network = await library.getNetwork();
+      setSigner(signer);
       setProvider(provider);
       setLibrary(library);
       if (accounts) setAccount(accounts[0]);
@@ -155,21 +160,86 @@ export default function Home() {
     }
   }, [provider]);
 
+  const [nftBalance, setNFTBalance] = useState();
+  const [loading, setLoading] = useState(false);
+  const [CID, setCID] = useState("");
+  const [audioURL, setAudioURL] = useState("")
+  const [myTokens, setMyTokens] = useState([])
+  const CONTRACT_ADDRESS = "0xb0bDa1ec39e85441994DAd71481f7C0080b57eCB";
+  const NFTContract = new ethers.Contract(
+    "0xb0bDa1ec39e85441994DAd71481f7C0080b57eCB",
+    MusicNFT.abi,
+    signer
+  );
+
+  const getNFTBalance = async (address) => {
+    const result = await NFTContract.balanceOf(address);
+    const balance = result.toString();
+    setNFTBalance(balance);
+    console.log("balance:", balance)
+  };
+
+  const loadMyCollection = async (address) => {
+    const totalSupply = await NFTContract.totalSupply();
+    console.log(`total supply: ${totalSupply}`)
+    const tokens = [];
+    for (let i = 0; i < totalSupply; i++) {
+      const tokenId = i;
+      const tokenOwner = await NFTContract.ownerOf(i);
+      const tokenURI = await NFTContract.tokenURI(i);
+      const tokenInfo = {
+        id: tokenId,
+        owner: tokenOwner.toString(),
+        uri: tokenURI.toString()
+      }
+      if(tokenOwner.toString() === address.toString()){
+        tokens.push(tokenInfo);
+      } console.log(tokens)
+      // tokens.push(tokenInfo);
+    }
+    setMyTokens(tokens);    
+  };
+  console.log("all tokens:", myTokens)
+
+
+  useEffect(() => {
+    account != null && getNFTBalance(account);
+    account != null && loadMyCollection(account);
+  }, [account]);
+
+  const mintNFT = async () => {
+    try {
+      const tx = await NFTContract.safeMint(account, CID);
+      setLoading(true);
+      await tx.wait();
+      setLoading(false);
+    } catch (error) {
+      setError(error);
+    }
+  };
+
+  const setSong = (id) => {
+    const songId = id.target.value;
+    setCID(songId);
+    console.log("song CID:", songId);
+  };
+
+  useEffect(() => {
+    const url = "https://" + CID + ".ipfs.nftstorage.link"
+    setAudioURL(url);
+    console.log("audio url:", url)
+  }, [CID]);
+
+  const createAudioURL = (uri) => {
+    const CID = uri.slice(7);
+    const newURL =  "https://" + CID + ".ipfs.nftstorage.link";
+    return newURL;
+  };
+
   return (
     <>
-      <Text position="absolute" top={0} right="15px">
-        If you're in the sandbox, first "Open in New Window" ⬆️
-      </Text>
       <VStack justifyContent="center" alignItems="center" h="100vh">
         <HStack marginBottom="10px">
-          <Text
-            margin="0"
-            lineHeight="1.15"
-            fontSize={["1.5em", "2em", "3em", "4em"]}
-            fontWeight="600"
-          >
-            Let's connect with
-          </Text>
           <Text
             margin="0"
             lineHeight="1.15"
@@ -181,7 +251,7 @@ export default function Home() {
               WebkitTextFillColor: "transparent"
             }}
           >
-            Web3Modal
+            NFT MUSIC APP
           </Text>
         </HStack>
         <HStack>
@@ -209,6 +279,56 @@ export default function Home() {
         {account && (
           <HStack justifyContent="flex-start" alignItems="flex-start">
             <Box
+              maxW="sm"
+              borderWidth="1px"
+              borderRadius="lg"
+              overflow="hidden"
+              padding="10px"
+            >
+              <VStack>
+                <Button onClick={mintNFT} isDisabled={CID == "" || loading}>
+                  Mint Song
+                </Button>
+                <Button onClick={loadMyCollection}>
+                  Load My Collection
+                </Button>
+              </VStack>
+            </Box>
+
+            <Box
+              maxW="sm"
+              borderWidth="1px"
+              borderRadius="lg"
+              overflow="hidden"
+              padding="10px"
+            >
+              <VStack>
+                <p>Set Song</p>
+                <Select placeholder="Select Song" onChange={setSong}>
+                  {songs.map((song, i) => {
+                    return <option key={i} value={song.cid}>{song.name}</option>
+                  })}
+                </Select>
+              </VStack>
+            </Box>
+            <Box>
+              <VStack>
+                {/* need to fix this to render songs correctly */}
+                {/* <Text style={{marginTop:"20%"}}>Select a song to play!</Text> */}
+                {songs.map((song, i) => {
+                  return (song.cid === CID &&
+                    <audio controls autoPlay name="radio" key={i}>
+                      <source src={audioURL} type="audio/mpeg" />
+                    </audio>
+                    )
+                })}
+                {audioURL === "https://.ipfs.nftstorage.link" && 
+                  <p style={{marginTop:"20%"}}>Select a song to play!</p>
+                }
+                {loading && <Text>This song is being minted!</Text>}
+              </VStack>
+            </Box>
+            {/* <Box
               maxW="sm"
               borderWidth="1px"
               borderRadius="lg"
@@ -277,9 +397,34 @@ export default function Home() {
                   )
                 ) : null}
               </VStack>
-            </Box>
+            </Box> */}
           </HStack>
         )}
+        <HStack>
+            <p>My NFT Balance: {nftBalance}</p>
+        </HStack>
+        <HStack flexWrap="wrap"  >
+            {myTokens.map((token) => {
+                return ( 
+                  <Box
+                    maxW="sm"
+                    borderWidth="1px"
+                    borderRadius="lg"
+                    overflow="wrap"
+                    overflowWrap={true}
+                    padding="10px"
+                  >
+                  <VStack>
+                    <Text>
+                      TokenID: {token.id}
+                    </Text>
+                    <audio controls>
+                      <source src={createAudioURL(token.uri)} type="audio/mpeg" />
+                    </audio>
+                  </VStack>
+                </Box>)
+          })}
+        </HStack>
         <Text>{error ? error.message : null}</Text>
       </VStack>
     </>

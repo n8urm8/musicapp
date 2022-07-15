@@ -16,5 +16,11 @@ export const networkParams = {
     iconUrls: [
       "https://celo.org/images/marketplace-icons/icon-celo-CELO-color-f.svg"
     ]
+  },
+  "0x13881": {
+    chainId: "0x13881",
+    rpcUrls: ["https://rpc-mumbai.matic.today","https://polygon-mumbai.g.alchemy.com/v2/v9tZMbd55QG9TpLMqrkDc1dQIzgZazV6"],
+    nativeCurrency: { name: "Matic", symbol: "Matic", decimals: 18,},
+    blockExplorerUrls: ["https://explorer-mumbai.maticvigil.com"],
   }
 };
