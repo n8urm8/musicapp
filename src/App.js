@@ -47,6 +47,7 @@ export default function Home() {
     MusicNFT.abi,
     signer
   );
+  const accountURL = "https://mumbai.polygonscan.com/search?f=0&q=" + account;
 
   const connectWallet = async () => {
     try {
@@ -243,6 +244,8 @@ export default function Home() {
     return newURL;
   };
 
+  
+
   return (
     <>
       <VStack justifyContent="center" alignItems="center" overflowY="scroll">
@@ -279,7 +282,7 @@ export default function Home() {
           </HStack>
 
           <Tooltip label={account} placement="right">
-            <Text>{`Account: ${truncateAddress(account)}`}</Text>
+            <Text>Account: <a href={accountURL} target="_blank" rel="norefferer noopener">{truncateAddress(account)}</a></Text>
           </Tooltip>
           <HStack>
             <Text>{`Network ID: ${chainId ? chainId : "No Network"}`}</Text>
@@ -292,6 +295,7 @@ export default function Home() {
                : ""
             }
           <Text><a style={{color:"blue"}} href="https://mumbai.polygonscan.com/address/0xa2f25545B02eE52EBFcf501E0843DFfc2bc50629#code" target="_blank" rel="noreferrer noopener">View Contract on PolygonScan</a> </Text>
+          <Text>Go to <a style={{color:"blue"}} href="https://faucet.polygon.technology/" rel="noreferrer noopener" target="_blank">Mumbai Faucet</a></Text>
         </VStack>
         {!account ? (
           <HStack 
