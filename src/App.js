@@ -229,6 +229,7 @@ export default function Home() {
       setLoading(true);
       await tx.wait();
       setLoading(false);
+      getNFTBalance(account);
     } catch (error) {
       setError(error);
     }
@@ -469,7 +470,7 @@ export default function Home() {
         <HStack justifyContent="center">
             <Text >My NFT Balance: {nftBalance} | MATIC: {maticBalance}</Text>
         </HStack>
-        <HStack flexWrap="wrap"  >
+        <HStack flexWrap="wrap" justifyContent="center" >
             {myTokens.map((token, i) => {
                 return ( 
                   <Box
