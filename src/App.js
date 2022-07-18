@@ -36,6 +36,18 @@ export default function Home() {
   const [signedMessage, setSignedMessage] = useState("");
   const [verified, setVerified] = useState();
 
+  const [nftBalance, setNFTBalance] = useState();
+  const [loading, setLoading] = useState(false);
+  const [CID, setCID] = useState("");
+  const [audioURL, setAudioURL] = useState("")
+  const [myTokens, setMyTokens] = useState([])
+  const contractAddress = "0xa2f25545B02eE52EBFcf501E0843DFfc2bc50629";
+  const NFTContract = new ethers.Contract(
+    contractAddress,
+    MusicNFT.abi,
+    signer
+  );
+
   const connectWallet = async () => {
     try {
       const provider = await web3Modal.connect();
@@ -46,12 +58,17 @@ export default function Home() {
       setSigner(signer);
       setProvider(provider);
       setLibrary(library);
+      setNetwork(network);
+      console.log("network.chainid", network.chainId)
+      if (network.chainId !== 80001) switchNetwork();
       if (accounts) setAccount(accounts[0]);
       setChainId(network.chainId);
+      
     } catch (error) {
       setError(error);
     }
   };
+
 
   const handleNetwork = (e) => {
     const id = e.target.value;
@@ -64,17 +81,18 @@ export default function Home() {
   };
 
   const switchNetwork = async () => {
+    const mumbainetwork = 80001;
     try {
       await library.provider.request({
         method: "wallet_switchEthereumChain",
-        params: [{ chainId: toHex(network) }]
+        params: [{ chainId: toHex(mumbainetwork) }]
       });
     } catch (switchError) {
-      if (switchError.code === 4902) {
+      if (switchError) {
         try {
           await library.provider.request({
             method: "wallet_addEthereumChain",
-            params: [networkParams[toHex(network)]]
+            params: [networkParams[mumbainetwork]]
           });
         } catch (error) {
           setError(error);
@@ -124,11 +142,12 @@ export default function Home() {
     refreshState();
   };
 
-  useEffect(() => {
-    if (web3Modal.cachedProvider) {
-      connectWallet();
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (web3Modal.cachedProvider) {
+  //     connectWallet();
+  //     console.log("cached provider", web3Modal.cachedProvider)
+  //   }
+  // }, []);
 
   useEffect(() => {
     if (provider?.on) {
@@ -138,7 +157,11 @@ export default function Home() {
       };
 
       const handleChainChanged = (_hexChainId) => {
-        setChainId(_hexChainId);
+        setChainId(Number(_hexChainId));
+        if (Number(_hexChainId) === 80001) {
+          loadMyCollection();
+          getNFTBalance(account);
+        }
       };
 
       const handleDisconnect = () => {
@@ -160,17 +183,6 @@ export default function Home() {
     }
   }, [provider]);
 
-  const [nftBalance, setNFTBalance] = useState();
-  const [loading, setLoading] = useState(false);
-  const [CID, setCID] = useState("");
-  const [audioURL, setAudioURL] = useState("")
-  const [myTokens, setMyTokens] = useState([])
-  const contractAddress = "0xa2f25545B02eE52EBFcf501E0843DFfc2bc50629";
-  const NFTContract = new ethers.Contract(
-    contractAddress,
-    MusicNFT.abi,
-    signer
-  );
 
   const getNFTBalance = async (address) => {
     const result = await NFTContract.balanceOf(address);
@@ -198,8 +210,8 @@ export default function Home() {
   };
 
   useEffect(() => {
-    account != null && getNFTBalance(account);
-    account != null && loadMyCollection();
+    console.log("chainid (getbalance):", chainId);
+    (account ? (getNFTBalance(account) && loadMyCollection()) : null);
   }, [account, nftBalance]);
 
   const mintNFT = async () => {
@@ -233,7 +245,7 @@ export default function Home() {
 
   return (
     <>
-      <VStack justifyContent="center" alignItems="center" h="80vh">
+      <VStack justifyContent="center" alignItems="center" overflowY="scroll">
         <HStack marginBottom="10px">
           <Text
             margin="0"
@@ -269,12 +281,27 @@ export default function Home() {
           <Tooltip label={account} placement="right">
             <Text>{`Account: ${truncateAddress(account)}`}</Text>
           </Tooltip>
-          <Text>{`Network ID: ${chainId ? chainId : "No Network"}`}</Text>
+          <HStack>
+            <Text>{`Network ID: ${chainId ? chainId : "No Network"}`}</Text>
+            <Text>{chainId === 80001 || Number(chainId) === Number(0x13881) ? "Mumbai" : ""}</Text>
+          </HStack>
+            {network && (Number(chainId) != 80001 || Number(chainId) != Number(0x13881)) ?
+              <Button onClick={switchNetwork}>
+                  Switch to Mumbai
+              </Button>
+               : ""
+            }
           <Text><a style={{color:"blue"}} href="https://mumbai.polygonscan.com/address/0xa2f25545B02eE52EBFcf501E0843DFfc2bc50629#code" target="_blank" rel="noreferrer noopener">View Contract on PolygonScan</a> </Text>
         </VStack>
         {!account ? (
-          <HStack padding="20px" justifyContent="flex-start" alignItems="flex-start">
+          <HStack 
+            padding="20px" 
+            justifyContent="center"
+            maxW="90vw"
+            flexWrap="wrap">
             <Box
+              maxW="sm"
+              margin="5px"
               borderWidth="1px"
               borderRadius="lg"
               padding="10px">
@@ -284,6 +311,8 @@ export default function Home() {
               </VStack>
             </Box>
             <Box
+              maxW="sm"
+              margin="5px"
               borderWidth="1px"
               borderRadius="lg"
               padding="10px">
@@ -295,6 +324,8 @@ export default function Home() {
               </VStack>
             </Box>
             <Box
+              maxW="sm"
+              margin="5px"
               borderWidth="1px"
               borderRadius="lg"
               padding="10px">
@@ -304,6 +335,8 @@ export default function Home() {
               </VStack>
             </Box>
             <Box
+              maxW="sm"
+              margin="5px"
               borderWidth="1px"
               borderRadius="lg"
               padding="10px">
@@ -363,11 +396,8 @@ export default function Home() {
                   Switch Network
                 </Button>
                 <Select placeholder="Select network" onChange={handleNetwork}>
-                  <option value="3">Ropsten</option>
-                  <option value="4">Rinkeby</option>
-                  <option value="42">Kovan</option>
-                  <option value="1666600000">Harmony</option>
-                  <option value="42220">Celo</option>
+                  <option value="80001">Mumbai</option>
+                  <option value="137">Polygon</option>
                 </Select>
               </VStack>
             </Box>
