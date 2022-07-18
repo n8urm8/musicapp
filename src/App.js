@@ -64,9 +64,9 @@ export default function Home() {
       setSigner(signer);
       setProvider(provider);
       setLibrary(library);
-      setNetwork(network);
+      setNetwork(network.chainId);
       console.log("network.chainid", network.chainId)
-      if (network.chainId !== 80001) switchNetwork();
+      // if (network.chainId !== 80001) switchNetwork();
       if (accounts) setAccount(accounts[0]);
       setChainId(network.chainId);
       
@@ -106,6 +106,7 @@ export default function Home() {
         }
       }
     }
+    window.location.reload();
   };
 
   const signMessage = async () => {
@@ -151,12 +152,12 @@ export default function Home() {
     refreshState();
   };
 
-  // useEffect(() => {
-  //   if (web3Modal.cachedProvider) {
-  //     connectWallet();
-  //     console.log("cached provider", web3Modal.cachedProvider)
-  //   }
-  // }, []);
+  useEffect(() => {
+    if (web3Modal.cachedProvider) {
+      connectWallet();
+      console.log("cached provider", web3Modal.cachedProvider)
+    }
+  }, []);
 
   useEffect(() => {
     if (provider?.on) {
@@ -167,10 +168,6 @@ export default function Home() {
 
       const handleChainChanged = (_hexChainId) => {
         setChainId(Number(_hexChainId));
-        if (Number(_hexChainId) === 80001) {
-          loadMyCollection();
-          getNFTBalance(account);
-        }
       };
 
       const handleDisconnect = () => {
@@ -219,9 +216,9 @@ export default function Home() {
   };
 
   useEffect(() => {
-    console.log("chainid (getbalance):", chainId);
-    (account ? (getNFTBalance(account) && loadMyCollection()) : null);
-  }, [account, nftBalance]);
+    console.log("chainid (getbalance):", network);
+    (account && network === 80001 ? (getNFTBalance(account) && loadMyCollection()) : null);
+  }, [account, network, nftBalance]);
 
   const mintNFT = async () => {
     try {
