@@ -34,8 +34,8 @@ export default function Home() {
   const [network, setNetwork] = useState();
   const [message, setMessage] = useState("");
   const [signedMessage, setSignedMessage] = useState("");
-  const [verified, setVerified] = useState();
-
+  const [verified, setVerified] = useState(); 
+  const [maticBalance, setMaticBalance] = useState();
   const [nftBalance, setNFTBalance] = useState();
   const [loading, setLoading] = useState(false);
   const [CID, setCID] = useState("");
@@ -53,9 +53,14 @@ export default function Home() {
     try {
       const provider = await web3Modal.connect();
       const library = new ethers.providers.Web3Provider(provider);
+      console.log("library", library)
       const signer = library.getSigner();
       const accounts = await library.listAccounts();
       const network = await library.getNetwork();
+      const balance = await signer.getBalance();
+      console.log("accounts", accounts)
+      console.log("balance??:", ethers.utils.formatEther(balance));
+      setMaticBalance(ethers.utils.formatEther(balance))
       setSigner(signer);
       setProvider(provider);
       setLibrary(library);
@@ -83,6 +88,7 @@ export default function Home() {
 
   const switchNetwork = async () => {
     const mumbainetwork = 80001;
+    setError("");
     try {
       await library.provider.request({
         method: "wallet_switchEthereumChain",
@@ -103,6 +109,7 @@ export default function Home() {
   };
 
   const signMessage = async () => {
+    setError("");
     if (!library) return;
     try {
       const signature = await library.provider.request({
@@ -117,6 +124,7 @@ export default function Home() {
   };
 
   const verifyMessage = async () => {
+    setError("");
     if (!library) return;
     try {
       const verify = await library.provider.request({
@@ -282,7 +290,7 @@ export default function Home() {
           </HStack>
 
           <Tooltip label={account} placement="right">
-            <Text>Account: <a href={accountURL} target="_blank" rel="norefferer noopener">{truncateAddress(account)}</a></Text>
+            <Text>Account: <a href={accountURL} target="_blank" rel="norefferer noopener" style={{color:"blue"}}>{truncateAddress(account)}</a></Text>
           </Tooltip>
           <HStack>
             <Text>{`Network ID: ${chainId ? chainId : "No Network"}`}</Text>
@@ -458,8 +466,8 @@ export default function Home() {
           </HStack>
         )}
         {account && <div>
-        <HStack>
-            <p>My NFT Balance: {nftBalance}</p>
+        <HStack justifyContent="center">
+            <Text >My NFT Balance: {nftBalance} | MATIC: {maticBalance}</Text>
         </HStack>
         <HStack flexWrap="wrap"  >
             {myTokens.map((token, i) => {
