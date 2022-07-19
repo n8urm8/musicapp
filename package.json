@@ -21,6 +21,7 @@
     "framer-motion": "4.1.17",
     "hardhat": "^2.10.1",
     "hardhat-contract-sizer": "^2.6.1",
+    "nft.storage": "^6.4.1",
     "react": "17.0.2",
     "react-audio-player": "^0.17.0",
     "react-dom": "17.0.2",

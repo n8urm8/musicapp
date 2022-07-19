@@ -483,9 +483,14 @@ export default function Home() {
                     <Text>
                       TokenID: {token.id}
                     </Text>
-                    <audio controls>
-                      <source src={createAudioURL(token.uri)} type="audio/mpeg" />
-                    </audio>
+                    {Number(token.id) === 8 ? 
+                      <video controls name="video">
+                        <source src={createAudioURL(token.uri)} type="video/mp4" />
+                      </video>
+                      :
+                      <audio controls>
+                        <source src={createAudioURL(token.uri)} type="audio/mpeg" />
+                      </audio>}
                   </VStack>
                 </Box>)
           })}
