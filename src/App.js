@@ -17,6 +17,7 @@ import Web3Modal from "web3modal";
 import { providerOptions } from "./providerOptions";
 import MusicNFT from "./constants/abis/MusicNFT.json";
 import { songs } from "./constants/MusicCIDs";
+import MintNFT from "./components/MintNFT";
 
 const web3Modal = new Web3Modal({
   cacheProvider: true, // optional
@@ -495,6 +496,7 @@ export default function Home() {
                 </Box>)
           })}
         </HStack></div>}
+        <MintNFT signer={signer} />
         <Text>{error ? error.message : null}</Text>
       </VStack>
     </>

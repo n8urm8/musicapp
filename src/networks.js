@@ -4,6 +4,6 @@ export const networkParams = {
     chainName: "Mumbai Testnet",
     rpcUrls: ["https://polygon-mumbai.g.alchemy.com/v2/v9tZMbd55QG9TpLMqrkDc1dQIzgZazV6"],
     nativeCurrency: { name: "Matic", symbol: "MATIC", decimals: 18,},
-    blockExplorerUrls: ["https://explorer-mumbai.maticvigil.com"],
+    blockExplorerUrls: ["https://mumbai.polygonscan.com/"],
   }
 };
