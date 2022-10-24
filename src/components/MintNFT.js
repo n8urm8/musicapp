@@ -1,17 +1,10 @@
-import React, {useEffect, useState} from 'react';
 import {
-    VStack,
-    Button,
-    Text,
-    HStack,
-    Select,
-    Input,
-    Box
-  } from "@chakra-ui/react";
-import { NFTStorage } from 'nft.storage';
+    Button
+} from "@chakra-ui/react";
 import { ethers } from 'ethers';
-import MediaNFT from '../constants/abis/MediaNFT.json'
-import mime from 'mime';
+import { useState } from 'react';
+import { Web3Storage } from 'web3.storage/dist/bundle.esm.min.js';
+import MediaNFT from '../constants/abis/MediaNFT.json';
 
 const APIKEY = process.env.REACT_APP_NFTSTORAGE_KEY;
 const nftContractAddress = '0xC365e077Bb448d3985d40222aE6972083f9b345c';
@@ -49,7 +42,7 @@ const MintNFT = ({signer}) => {
     }
 
     const uploadNFTContent = async(inputFile) =>{
-        const nftStorage = new NFTStorage({token: APIKEY,});
+        const nftStorage = new Web3Storage({token: APIKEY,});
         let filetype = inputFile.type;
         filetype = filetype.split("/");
         setType(filetype[0]);
